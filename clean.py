@@ -10,21 +10,21 @@ from dash import Dash, html, dcc, callback, Output, Input
 import pandas as pd
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
-df = pd.read_csv("links.csv", index_col=0)
+df = pd.read_csv("./data/output/links.csv", index_col=0)
 
 
-print("fixing archive links...")
-# Define a regular expression to match the archived URLs
 pattern = r"https://web\.archive\.org/web/\d+/(.*)"
-
-# Iterate over each cell in the DataFrame and replace archived URLs with unarchived URLs
+# iterate over each column in the dataframe
 for column in df.columns:
-    for index, cell in df[column].iteritems():
-        urls = re.findall(pattern, str(cell))
-        if urls:
-            for url in urls:
-                unarchived_url = url
-            df.at[index, column] = unarchived_url
+    # iterate over each row in the column
+    for i in range(len(df[column])):
+        # apply the regex pattern to the cell, but only if it's not null or NaN
+        cell_value = df.at[i, column]
+        if pd.notnull(cell_value):
+            # extract the end part of the URL using the regex pattern
+            match = re.search(pattern, cell_value)
+            if match:
+                df.at[i, column] = match.group(1)
 
 
 df = df.where(pd.notnull(df), None)
@@ -63,6 +63,9 @@ for col in df.columns:
     # count the frequency of each unique value in the column and add it to df_frequency
     counts = df[col].value_counts()
     df_frequency[col] = df_frequency.index.map(counts.get)
+
+
+df_frequency = df_frequency.drop("web.archive.org", axis=0)
 
 df_frequency.to_csv("./data/output/frequency.csv")
 
