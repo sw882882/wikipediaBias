@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 import re
 from time import sleep
 from datetime import datetime
-from fuzzywuzzy import process
-from urllib.parse import urlparse
+from difflib import SequenceMatcher
+import urllib.parse
 
 # Read the data from a CSV file using pandas
 df = pd.read_csv("./data/source/2015~.csv")
@@ -62,27 +62,36 @@ def find_earliest_date(string):
     return min(dates)
 
 
-# TODO fix its broken, limit url size or just hard code it
-# so probably take the opposite approach, match url then from the matching urls do the similarity stuff
-def get_bias(query_string):
-    # Find the best matching string in the source_link column
-    best_match = process.extractOne(query_string, df_allsides["source_link"])[0]
+def get_bias(url):
+    # Parse the root domain from the input URL
+    root_domain = (
+        urllib.parse.urlparse(url).hostname.split(".")[-2]
+        + "."
+        + urllib.parse.urlparse(url).hostname.split(".")[-1]
+    )
+    # Find rows with matching root domains
+    matching_rows = df_allsides[
+        df_allsides["source_link"].str.contains(root_domain, na=False)
+    ]
 
-    # Check if the best match has the same root domain as the query string
-    try:
-        query_root = urlparse(query_string).hostname
-        match_root = urlparse(best_match).hostname
-        if query_root != match_root:
-            print("websites not matching", query_root, query_string)
-            return None, "other"
-        # Get the bias and text data from the matching row
-        row = df_allsides[df_allsides["source_link"] == best_match].iloc[0]
-        return row["bias"], row["text"]
-    except:
-        print("BIG ERROR BIG ERROR")
-        print(query_string)
-        print(best_match)
-        return None, "other"
+    # Initialize variables for the highest similarity score and corresponding row
+    highest_score = 0
+    best_row = None
+
+    # Iterate over the matching rows and find the one with the highest similarity score
+    for index, row in matching_rows.iterrows():
+        similarity_score = SequenceMatcher(None, url, row["source_link"]).ratio()
+        if similarity_score > highest_score:
+            highest_score = similarity_score
+            best_row = row
+
+    # If no matching row was found, return None for both values
+    if best_row is None:
+        return None, "Other"
+
+    # Otherwise, return the bias and text for the best matching row
+    print(best_row["text"])
+    return best_row["bias"], best_row["text"]
 
 
 final_dates = []

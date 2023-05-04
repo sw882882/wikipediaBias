@@ -21,6 +21,7 @@ def extract_data(url):
         source = article.domain
         section = article.infos.get("section")
         publish_date = article.publish_date
+        print(title)
     except Exception as e:
         print(f"Error: no workie :(")
         title = None
@@ -54,4 +55,4 @@ for index, row in df.iterrows():
 
 
 # Save the results to a new CSV file
-# df.to_csv("output_file.csv", index=False)
+df.to_csv("links_text.csv", index=False)
