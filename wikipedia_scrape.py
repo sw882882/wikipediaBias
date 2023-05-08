@@ -13,6 +13,18 @@ df = pd.read_csv("./data/source/2015~.csv")
 df_allsides = pd.read_csv("./data/output/allsides.csv")
 
 
+def clean_urls(links):
+    new_links = []
+    for link in links:
+        http_count = link.count("http")
+        if http_count > 1:
+            idx = link.find("http", link.find("http") + 1)
+            new_links.append(link[idx:])
+        else:
+            new_links.append(link)
+    return new_links
+
+
 def search_for_page(name):
     r = ddg(f"{name} politician site:en.wikipedia.org")
     if r is not None:
@@ -64,11 +76,14 @@ def find_earliest_date(string):
 
 def get_bias(url):
     # Parse the root domain from the input URL
-    root_domain = (
-        urllib.parse.urlparse(url).hostname.split(".")[-2]
-        + "."
-        + urllib.parse.urlparse(url).hostname.split(".")[-1]
-    )
+    try:
+        root_domain = (
+            urllib.parse.urlparse(url).hostname.split(".")[-2]
+            + "."
+            + urllib.parse.urlparse(url).hostname.split(".")[-1]
+        )
+    except:
+        return None, "Other"
     # Find rows with matching root domains
     matching_rows = df_allsides[
         df_allsides["source_link"].str.contains(root_domain, na=False)
@@ -132,17 +147,8 @@ for index, row in df.iterrows():
             print(len(sources), len(dates))
     else:
         print("Error with DDG")
-
-pattern = r"^https://web\.archive\.org/web/\d{14}/(http|https)://(.*)$"
-pattern = r"^https://archive\.today/\d{14}/(http|https)://(.*)$"
-
-for i in range(len(final_links)):
-    match = re.match(pattern, final_links[i])
-    match_today = re.match(pattern, final_links[i])
-    if match:
-        final_links[i] = match.group(1) + "://" + match.group(2)
-    if match_today:
-        final_links[i] = match_today.group(1) + "://" + match.group(2)
+# TODO not working fix this
+final_links = clean_urls(final_links)
 
 for link in final_links:
     bias, name = get_bias(link)
