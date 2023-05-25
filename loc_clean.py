@@ -27,6 +27,7 @@ for index, row in df_loc.iterrows():
     print(dict1)
 
     # TODO add row for domain and bias in df_sources wikipedia_scrape.py then write pandas code to get data for box and whiskers
+    # nvm no need
 
     row_list.append(dict1)
 df = pd.DataFrame(row_list)

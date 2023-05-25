@@ -39,31 +39,23 @@ df = pd.DataFrame(data)
 
 df["link"] = "https://www.allsides.com" + df["link"].astype(str)
 
-# Create empty lists to store the new data
 bias = []
 source_link = []
 
-# Loop through the links in the dataframe
 for link in df["link"]:
-    # Use requests to get the HTML content of the page
     page = requests.get(link)
 
-    # Use Beautiful Soup to parse the HTML content
     soup = BeautifulSoup(page.content, "html.parser")
 
-    # Find the div with class "numerical-bias-rating"
     bias_div = soup.find("div", class_="numerical-bias-rating")
 
-    # If the div exists, append the text to the bias list
     if bias_div:
         bias.append(bias_div.text.strip())
     else:
         bias.append(None)
 
-    # Find all the links with class "external-link"
     source_links = soup.find_all("a", class_="external-link")
 
-    # If any links exist, append the first one to the source_link list
     if source_links:
         source_link.append(source_links[0]["href"])
     else:
@@ -71,7 +63,6 @@ for link in df["link"]:
     sleep(0.5)
     print("bias rating...")
 
-# Add the new columns to the dataframe
 df["bias"] = bias
 df["source_link"] = source_link
 

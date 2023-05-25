@@ -8,7 +8,6 @@ from datetime import datetime
 from difflib import SequenceMatcher
 import urllib.parse
 
-# Read the data from a CSV file using pandas
 df = pd.read_csv("./data/source/2015~.csv")
 df_allsides = pd.read_csv("./data/output/allsides.csv")
 
@@ -67,7 +66,7 @@ def find_earliest_date(string):
             try:
                 date = datetime.strptime(date_string, "%b %d, %Y")
             except:
-                print("some other wack ass format")
+                print("some other wack format")
                 return None
         dates.append(date)
 
@@ -137,13 +136,13 @@ for index, row in df.iterrows():
         print(len(sources), len(dates))
         names = [name] * len(sources)
         if len(names) == len(sources) == len(dates):
-            print("looks like its going good")
+            print("good")
             final_names.extend(names)
             final_dates.extend(dates)
             final_links.extend(sources)
-            # break  # FOR FUTURE ME TEMP
+            # break # FOR FUTURE ME TEMP
         else:
-            print(":( failed")
+            print("failed")
             print(len(sources), len(dates))
     else:
         print("Error with DDG")
@@ -169,6 +168,17 @@ df_output = pd.DataFrame(
     ),
     columns=["name", "date", "links", "source name", "bias", "wikipedia link"],
 )
+
+# More spagettification to fix duplicate issue because I would rather be lazy
+df_output["modified_links"] = df_output["links"].str.replace(
+    r"^https?://", "", regex=True
+)
+
+df_output = df_output.drop_duplicates("modified_links", keep="last")
+
+df_output.reset_index(drop=True, inplace=True)
+
+df_output = df_output.drop("modified_links", axis=1)
 
 print(df_output)
 df_output.to_csv("links.csv")
